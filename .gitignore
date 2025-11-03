@@ -1,0 +1,9 @@
+.DS_Store
+/.build
+/Packages
+*.xcworkspace
+xcuserdata/
+xcshareddata/
+.swiftpm
+.cursor
+.vscode
