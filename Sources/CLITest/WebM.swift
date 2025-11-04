@@ -14,30 +14,31 @@ public let OneSecNs: Double = 1_000_000_000
 
 public class WebMParser {
 
+    public let duration: TimeInterval
+    public let tracks: [WebMTrack]
+
+
     public init(filePath: String) throws {
         guard let handle = webm_parser_create(filePath) else {
             throw WebMError.invalidFile
         }
         self.handle = handle
-    }
-
-
-    public func getDuration() -> TimeInterval { webm_parser_get_duration(handle) }
-
-
-    public func getTracks() -> [WebMTrack] {
-        (0..<webm_parser_track_count(handle))
-            .compactMap { index in
+        self.duration = webm_parser_get_duration(handle)
+        self.tracks = (0..<webm_parser_track_count(handle))
+            .compactMap { index -> WebMTrack? in
                 var cTrack = CWebMTrack()
                 let result = webm_parser_track_info(handle, index, &cTrack)
-                return result ? WebMTrack(cTrack) : nil
+                guard result else { return nil }
+                var cAudio = CWebMAudioInfo()
+                let audioInfo = webm_parser_audio_info(handle, index, &cAudio) ? WebMTrack.AudioInfo(cAudio) : nil
+                return WebMTrack(cTrack, audioInfo: audioInfo)
             }
     }
 
 
     // Private
 
-    private let handle: WebMParserHandle
+    private let handle: WebMHandle
 
     deinit {
         webm_parser_destroy(handle)
@@ -55,6 +56,18 @@ public class WebMTrack {
         case unknown = -1
     }
 
+    public struct AudioInfo {
+        let samplingRate: Double
+        let channels: Int
+        let bitDepth: Int
+
+        init(_ cInfo: CWebMAudioInfo) {
+            self.samplingRate = cInfo.samplingRate
+            self.channels = Int(cInfo.channels)
+            self.bitDepth = Int(cInfo.bitDepth)
+        }
+    }
+
     public let type: TrackType
     public let number: Int
     public let uid: UInt64
@@ -64,8 +77,10 @@ public class WebMTrack {
     public let defaultDuration: TimeInterval
     public let codecDelay: TimeInterval
     public let seekPreRoll: TimeInterval
+    public let audioInfo: AudioInfo?
+    // TODO: videoInfo
 
-    init(_ cTrack: CWebMTrack) {
+    init(_ cTrack: CWebMTrack, audioInfo: AudioInfo?) {
         self.type = TrackType(rawValue: cTrack.type) ?? .unknown
         self.number = cTrack.number
         self.uid = cTrack.uid
@@ -75,6 +90,7 @@ public class WebMTrack {
         self.defaultDuration = Double(cTrack.defaultDuration) / OneSecNs
         self.codecDelay = Double(cTrack.codecDelay) / OneSecNs
         self.seekPreRoll = Double(cTrack.seekPreRoll) / OneSecNs
+        self.audioInfo = audioInfo
     }
 }
 

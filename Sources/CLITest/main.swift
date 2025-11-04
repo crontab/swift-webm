@@ -11,10 +11,13 @@ let filePath = "/Users/hovik/Projects/TalkMachine/audio-a.webm"
 
 do {
     let parser = try WebMParser(filePath: filePath)
-    print("Duration:", parser.getDuration())
-    parser.getTracks()
-        .forEach {
-            print("  Track #\($0.number)", $0.codecId ?? "?")
+    print("Duration:", parser.duration)
+    parser.tracks
+        .forEach { track in
+            print("  Track #\(track.number)", track.codecId ?? "?")
+            if let audioInfo = track.audioInfo {
+                print("    Sampling rate:", audioInfo.samplingRate, " channels:", audioInfo.channels, " bit depth:", audioInfo.bitDepth)
+            }
         }
 }
 catch {

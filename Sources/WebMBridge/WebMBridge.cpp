@@ -19,7 +19,7 @@ struct WebMParserContext {
     std::unique_ptr<mkvparser::MkvReader> reader;
     std::unique_ptr<mkvparser::Segment> segment;
 
-    inline static WebMParserContext *cast(WebMParserHandle handle) {
+    inline static WebMParserContext *cast(WebMHandle handle) {
         return static_cast<WebMParserContext *>(handle);
     }
 
@@ -30,7 +30,7 @@ struct WebMParserContext {
 };
 
 
-WebMParserHandle webm_parser_create(const char *filename) {
+WebMHandle webm_parser_create(const char *filename) {
     auto context = std::make_unique<WebMParserContext>();
 
     // Create reader
@@ -60,12 +60,12 @@ WebMParserHandle webm_parser_create(const char *filename) {
 }
 
 
-void webm_parser_destroy(WebMParserHandle handle) {
+void webm_parser_destroy(WebMHandle handle) {
     delete WebMParserContext::cast(handle);
 }
 
 
-double webm_parser_get_duration(WebMParserHandle handle) {
+double webm_parser_get_duration(WebMHandle handle) {
     auto context = WebMParserContext::cast(handle);
     if (!context)
         return 0;
@@ -87,8 +87,7 @@ double webm_parser_get_duration(WebMParserHandle handle) {
 
 // MARK: - TRACK PARSING
 
-
-long webm_parser_track_count(WebMParserHandle handle) {
+long webm_parser_track_count(WebMHandle handle) {
     auto context = WebMParserContext::cast(handle);
     if (!context)
         return 0;
@@ -104,7 +103,7 @@ long webm_parser_track_count(WebMParserHandle handle) {
 }
 
 
-bool webm_parser_track_info(WebMParserHandle handle, long index, CWebMTrack* out) {
+bool webm_parser_track_info(WebMHandle handle, long index, CWebMTrack* out) {
     if (!out)
         return false;
 
@@ -135,6 +134,38 @@ bool webm_parser_track_info(WebMParserHandle handle, long index, CWebMTrack* out
     out->defaultDuration = track->GetDefaultDuration();
     out->codecDelay = track->GetCodecDelay();
     out->seekPreRoll = track->GetSeekPreRoll();
+
+    return true;
+}
+
+
+bool webm_parser_audio_info(WebMHandle handle, long index, struct CWebMAudioInfo* out) {
+    if (!out)
+        return false;
+
+    auto context = WebMParserContext::cast(handle);
+    if (!context)
+        return false;
+
+    if (!context->segment)
+        return false;
+
+    const mkvparser::Tracks *tracks = context->segment->GetTracks();
+    if (!tracks)
+        return false;
+
+    const mkvparser::Track *track = tracks->GetTrackByIndex(index);
+    if (!track)
+        return false;
+
+    if (track->GetType() != mkvparser::Track::kAudio)
+        return false;
+
+    const mkvparser::AudioTrack *audioTrack = static_cast<const mkvparser::AudioTrack *>(track);
+
+    out->samplingRate = audioTrack->GetSamplingRate();
+    out->channels = audioTrack->GetChannels();
+    out->bitDepth = audioTrack->GetBitDepth();
 
     return true;
 }

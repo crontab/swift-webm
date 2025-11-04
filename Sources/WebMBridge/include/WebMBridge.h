@@ -16,10 +16,11 @@ extern "C" {
 
 
 // Opaque handle for Swift interop
-typedef void *WebMParserHandle;
+typedef void *WebMHandle;
 
 
-// Intermediary structure for creating Swift-friendly ones
+// Intermediary structures for creating Swift-friendly ones
+
 struct CWebMTrack {
     long type;
     long number;
@@ -33,12 +34,21 @@ struct CWebMTrack {
 };
 
 
+struct CWebMAudioInfo {
+    double samplingRate;
+    long long channels;
+    long long bitDepth;
+};
+
+
 // Parser methods
-WebMParserHandle webm_parser_create(const char *filepath);
-void webm_parser_destroy(WebMParserHandle handle);
-double webm_parser_get_duration(WebMParserHandle handle);
-long webm_parser_track_count(WebMParserHandle handle);
-bool webm_parser_track_info(WebMParserHandle handle, long index, struct CWebMTrack* out);
+
+WebMHandle  webm_parser_create(const char *filepath);
+void        webm_parser_destroy(WebMHandle handle);
+double      webm_parser_get_duration(WebMHandle handle);
+long        webm_parser_track_count(WebMHandle handle);
+bool        webm_parser_track_info(WebMHandle handle, long index, struct CWebMTrack* out);
+bool        webm_parser_audio_info(WebMHandle handle, long number, struct CWebMAudioInfo* out);
 
 
 #ifdef __cplusplus
