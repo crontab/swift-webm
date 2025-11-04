@@ -22,11 +22,17 @@ struct WebMParserContext {
     unique_ptr<MkvReader> reader; // should be retained for the entire duration of parsing
     unique_ptr<const Segment> segment; // initialized in constructor, guaranteed non-null
 
-    const Cluster *cluster; // current cluster, initialized to first in the ctor
-    const BlockEntry *block; // current block within cluster, initialized to first
+    // Current reading pointer
+    const Cluster *cluster;
+    const BlockEntry *block;
+    int frameNumber;
+    bool eos;
 
     inline static WebMParserContext *cast(WebMHandle handle) {
         return static_cast<WebMParserContext *>(handle);
+    }
+
+    WebMParserContext(): reader(make_unique<MkvReader>()), segment(), cluster(NULL), block(NULL), frameNumber(0), eos(false) {
     }
 
     ~WebMParserContext() {
@@ -37,40 +43,29 @@ struct WebMParserContext {
 
 
 WebMHandle webm_parser_create(const char *filename) {
-    auto context = make_unique<WebMParserContext>();
-
-    // Create reader
-    context->reader = make_unique<MkvReader>();
+    auto c = make_unique<WebMParserContext>();
 
     // Open file
-    if (context->reader->Open(filename) != 0)
+    if (c->reader->Open(filename) != 0)
         return NULL;
 
     // Parse the WebM header
     long long pos = 0;
     EBMLHeader ebmlHeader;
-    if (ebmlHeader.Parse(context->reader.get(), pos) < 0)
+    if (ebmlHeader.Parse(c->reader.get(), pos) < 0)
         return NULL;
 
     // Create & load segment
     Segment *segment = NULL;
-    if (Segment::CreateInstance(context->reader.get(), pos, segment) != 0)
+    if (Segment::CreateInstance(c->reader.get(), pos, segment) != 0)
         return NULL;
 
     if (!segment || segment->Load() < 0)
         return NULL;
 
-    context->segment.reset(segment);
+    c->segment.reset(segment);
 
-    // Load first cluster & first block
-    context->cluster = segment->GetFirst();
-    if (context->cluster) {
-        const BlockEntry *block;
-        long status = context->cluster->GetFirst(block);
-        context->block = block;
-    }
-
-    return context.release();
+    return c.release();
 }
 
 
@@ -80,11 +75,11 @@ void webm_parser_destroy(WebMHandle handle) {
 
 
 double webm_parser_get_duration(WebMHandle handle) {
-    auto context = WebMParserContext::cast(handle);
-    if (!context)
+    auto c = WebMParserContext::cast(handle);
+    if (!c)
         return 0;
 
-    const SegmentInfo *info = context->segment->GetInfo();
+    const SegmentInfo *info = c->segment->GetInfo();
     if (!info)
         return 0;
 
@@ -99,11 +94,11 @@ double webm_parser_get_duration(WebMHandle handle) {
 // MARK: - TRACK PARSING
 
 long webm_parser_track_count(WebMHandle handle) {
-    auto context = WebMParserContext::cast(handle);
-    if (!context)
+    auto c = WebMParserContext::cast(handle);
+    if (!c)
         return 0;
 
-    const Tracks *tracks = context->segment->GetTracks();
+    const Tracks *tracks = c->segment->GetTracks();
     if (!tracks)
         return 0;
 
@@ -115,11 +110,11 @@ bool webm_parser_track_info(WebMHandle handle, long index, CWebMTrack *out) {
     if (!out)
         return false;
 
-    auto context = WebMParserContext::cast(handle);
-    if (!context)
+    auto c = WebMParserContext::cast(handle);
+    if (!c)
         return false;
 
-    const Tracks *tracks = context->segment->GetTracks();
+    const Tracks *tracks = c->segment->GetTracks();
     if (!tracks)
         return false;
 

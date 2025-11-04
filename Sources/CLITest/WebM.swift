@@ -46,11 +46,11 @@ public class WebMParser {
 public class WebMTrack {
 
     public enum TrackType: Int {
-        case video = 1
-        case audio = 2
+        case video = 0x01
+        case audio = 0x02
         case subtitle = 0x11
         case metadata = 0x21
-        case unknown = -1
+        case unknown = 0
     }
 
     public let type: TrackType

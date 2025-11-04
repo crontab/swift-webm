@@ -21,7 +21,7 @@ typedef void *WebMHandle;
 
 // Intermediary structures for creating Swift-friendly ones
 
-struct CWebMTrack {
+typedef struct CWebMTrack {
     long type;
     long number;
     unsigned long long uid;
@@ -36,7 +36,14 @@ struct CWebMTrack {
     double samplingRate;
     long long channels;
     long long bitDepth;
-};
+} CWebMTrack;
+
+
+typedef struct CWebMData {
+    unsigned char *data;
+    long size;
+    unsigned long long timestamp;
+} CWebMData;
 
 
 // Parser methods
@@ -45,8 +52,9 @@ WebMHandle  webm_parser_create(const char *filepath);
 void        webm_parser_destroy(WebMHandle handle);
 double      webm_parser_get_duration(WebMHandle handle);
 long        webm_parser_track_count(WebMHandle handle);
-bool        webm_parser_track_info(WebMHandle handle, long index, struct CWebMTrack *out);
-
+bool        webm_parser_track_info(WebMHandle handle, long index, CWebMTrack *out);
+CWebMData   *webm_parser_read_audio(WebMHandle handle, long number);
+void        webm_free_data(CWebMData *data);
 
 #ifdef __cplusplus
 }
