@@ -25,6 +25,16 @@ public class WebMParser {
     public func getDuration() -> TimeInterval { webm_parser_get_duration(handle) }
 
 
+    public func getTracks() -> [WebMTrack] {
+        (0..<webm_parser_track_count(handle))
+            .compactMap { index in
+                var cTrack = CWebMTrack()
+                let result = webm_parser_track_info(handle, index, &cTrack)
+                return result ? WebMTrack(cTrack) : nil
+            }
+    }
+
+
     // Private
 
     private let handle: WebMParserHandle
@@ -48,8 +58,8 @@ public class WebMTrack {
     public let type: TrackType
     public let number: Int
     public let uid: UInt64
-    public let name: String
-    public let codecId: String
+    public let name: String?
+    public let codecId: String?
     public let lacing: Bool
     public let defaultDuration: TimeInterval
     public let codecDelay: TimeInterval
@@ -59,8 +69,8 @@ public class WebMTrack {
         self.type = TrackType(rawValue: cTrack.type) ?? .unknown
         self.number = cTrack.number
         self.uid = cTrack.uid
-        self.name = String(cString: cTrack.name, encoding: .utf8) ?? ""
-        self.codecId = String(cString: cTrack.codecId)
+        self.name = cTrack.name.flatMap { String(cString: $0, encoding: .utf8) }
+        self.codecId = cTrack.codecId.map { String(cString: $0) }
         self.lacing = cTrack.lacing
         self.defaultDuration = Double(cTrack.defaultDuration) / OneSecNs
         self.codecDelay = Double(cTrack.codecDelay) / OneSecNs

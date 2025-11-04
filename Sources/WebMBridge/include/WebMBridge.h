@@ -33,9 +33,13 @@ struct CWebMTrack {
 };
 
 
+// Parser methods
 WebMParserHandle webm_parser_create(const char *filepath);
 void webm_parser_destroy(WebMParserHandle handle);
 double webm_parser_get_duration(WebMParserHandle handle);
+long webm_parser_track_count(WebMParserHandle handle);
+bool webm_parser_track_info(WebMParserHandle handle, long index, struct CWebMTrack* out);
+
 
 #ifdef __cplusplus
 }
