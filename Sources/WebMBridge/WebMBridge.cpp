@@ -7,6 +7,8 @@
 
 #include "WebMBridge.h"
 
+#include <assert.h>
+
 #include "../libwebm/mkvmuxer/mkvmuxer.h"
 #include "../libwebm/mkvmuxer/mkvwriter.h"
 #include "../libwebm/mkvparser/mkvparser.h"
@@ -20,24 +22,49 @@ using namespace mkvparser;
 
 struct WebMParserContext {
     unique_ptr<MkvReader> reader; // should be retained for the entire duration of parsing
-    unique_ptr<const Segment> segment; // initialized in constructor, guaranteed non-null
+    unique_ptr<Segment> segment; // initialized in constructor, guaranteed non-null
 
     // Current reading pointer
     const Cluster *cluster;
-    const BlockEntry *block;
+    const BlockEntry *entry;
     int frameNumber;
     bool eos;
+    CWebMData frameData;
 
     inline static WebMParserContext *cast(WebMHandle handle) {
         return static_cast<WebMParserContext *>(handle);
     }
 
-    WebMParserContext(): reader(make_unique<MkvReader>()), segment(), cluster(NULL), block(NULL), frameNumber(0), eos(false) {
+    WebMParserContext(): reader(make_unique<MkvReader>()), segment(), cluster(NULL), entry(NULL), frameNumber(0), eos(false) {
+        frameData.bytes = NULL;
+        frameData.size = 0;
+        frameData.timestamp = 0;
     }
 
     ~WebMParserContext() {
         if (reader)
             reader->Close();
+        free(frameData.bytes);
+    }
+
+    void setEOS() {
+        cluster = NULL;
+        entry = NULL;
+        frameNumber = 0;
+        free(frameData.bytes);
+        frameData.bytes = NULL;
+        frameData.size = 0;
+        frameData.timestamp = 0;
+    }
+
+    void ensureFrameBytes(long size) {
+        if (size > frameData.size) {
+            if (!frameData.bytes)
+                frameData.bytes = static_cast<unsigned char*>(malloc(size));
+            else // grow if necessary
+                frameData.bytes = static_cast<unsigned char*>(realloc(frameData.bytes, size));
+        }
+        frameData.size = size;
     }
 };
 
@@ -148,4 +175,75 @@ bool webm_parser_track_info(WebMHandle handle, long index, CWebMTrack *out) {
     }
 
     return true;
+}
+
+
+// MARK: - DATA READER
+
+CWebMData *webm_parser_read(WebMHandle handle, long trackNumber) {
+    auto c = WebMParserContext::cast(handle);
+    if (!c)
+        return NULL;
+
+    if (c->eos)
+        return NULL;
+
+    if (!c->cluster) {
+        c->cluster = c->segment->GetFirst();
+newCluster:
+        c->entry = NULL;
+        c->frameNumber = 0;
+        if (!c->cluster || c->cluster->EOS()) {
+            c->setEOS();
+            return NULL;
+        }
+    }
+
+    long status = 0;
+    const Block *block = NULL;
+    if (c->entry) {
+        block = c->entry->GetBlock();
+    }
+    else {
+        status = c->cluster->GetFirst(c->entry);
+newBlock:
+        c->frameNumber = 0;
+        while (status == 0 && c->entry != NULL) {
+            if (!c->entry->EOS()) {
+                block = c->entry->GetBlock();
+                if (block->GetTrackNumber() == trackNumber)
+                    break;
+                block = NULL;
+            }
+            status = c->cluster->GetNext(c->entry, c->entry);
+        }
+        if (!block) {
+            c->cluster = c->segment->GetNext(c->cluster);
+            goto newCluster;
+        }
+    }
+
+    if (c->frameNumber >= block->GetFrameCount()) {
+        status = c->cluster->GetNext(c->entry, c->entry);
+        block = NULL;
+        goto newBlock;
+    }
+
+    auto frame = block->GetFrame(c->frameNumber);
+    c->ensureFrameBytes(frame.len);
+    c->frameData.timestamp = block->GetTime(c->cluster);
+
+    status = frame.Read(c->reader.get(), c->frameData.bytes);
+    if (status < 0)
+        return NULL;
+
+    c->frameNumber++;
+
+    return &c->frameData;
+}
+
+
+bool webm_parser_eos(WebMHandle handle) {
+    auto c = WebMParserContext::cast(handle);
+    return !c || c->eos;
 }

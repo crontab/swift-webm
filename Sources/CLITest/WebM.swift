@@ -33,6 +33,21 @@ public class WebMParser {
     }
 
 
+    public func readData(trackNumber: Int) -> WebMFrame? {
+        guard let cData = webm_parser_read(handle, trackNumber)?.pointee else {
+            return nil
+        }
+        return WebMFrame(
+            data: Data(bytes: cData.bytes, count: cData.size),
+            timestamp: Double(cData.timestamp) / OneSecNs)
+    }
+
+
+    public var isEOS: Bool {
+        webm_parser_eos(handle)
+    }
+
+
     // Private
 
     private let handle: WebMHandle
@@ -85,6 +100,12 @@ public class WebMTrack {
         self.channels = Int(cTrack.channels)
         self.bitDepth = Int(cTrack.bitDepth)
     }
+}
+
+
+public struct WebMFrame {
+    let data: Data
+    let timestamp: TimeInterval
 }
 
 

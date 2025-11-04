@@ -16,6 +16,18 @@ do {
         .forEach { track in
             print("  Track #\(track.number)", track.codecId ?? "?", " sampling rate:", track.samplingRate, " channels:", track.channels, " bit depth:", track.bitDepth)
         }
+
+    let trackNumber = parser.tracks
+        .first { $0.type == .audio }
+        .map { $0.number }
+
+    guard let trackNumber else {
+        throw WebMError.invalidFile
+    }
+
+    while let frame = parser.readData(trackNumber: trackNumber) {
+        print("    Frame:", frame.data.count, frame.timestamp)
+    }
 }
 catch {
     print("ERROR:", error)
