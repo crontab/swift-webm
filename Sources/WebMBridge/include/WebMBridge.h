@@ -31,10 +31,8 @@ struct CWebMTrack {
     unsigned long long defaultDuration;
     unsigned long long codecDelay;
     unsigned long long seekPreRoll;
-};
 
-
-struct CWebMAudioInfo {
+    // For audio tracks:
     double samplingRate;
     long long channels;
     long long bitDepth;
@@ -48,7 +46,6 @@ void        webm_parser_destroy(WebMHandle handle);
 double      webm_parser_get_duration(WebMHandle handle);
 long        webm_parser_track_count(WebMHandle handle);
 bool        webm_parser_track_info(WebMHandle handle, long index, struct CWebMTrack *out);
-bool        webm_parser_audio_info(WebMHandle handle, long number, struct CWebMAudioInfo *out);
 
 
 #ifdef __cplusplus

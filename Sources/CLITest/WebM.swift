@@ -28,10 +28,7 @@ public class WebMParser {
             .compactMap { index -> WebMTrack? in
                 var cTrack = CWebMTrack()
                 let result = webm_parser_track_info(handle, index, &cTrack)
-                guard result else { return nil }
-                var cAudio = CWebMAudioInfo()
-                let audioInfo = webm_parser_audio_info(handle, index, &cAudio) ? WebMTrack.AudioInfo(cAudio) : nil
-                return WebMTrack(cTrack, audioInfo: audioInfo)
+                return result ? WebMTrack(cTrack) : nil
             }
     }
 
@@ -56,18 +53,6 @@ public class WebMTrack {
         case unknown = -1
     }
 
-    public struct AudioInfo {
-        let samplingRate: Double
-        let channels: Int
-        let bitDepth: Int
-
-        init(_ cInfo: CWebMAudioInfo) {
-            self.samplingRate = cInfo.samplingRate
-            self.channels = Int(cInfo.channels)
-            self.bitDepth = Int(cInfo.bitDepth)
-        }
-    }
-
     public let type: TrackType
     public let number: Int
     public let uid: UInt64
@@ -77,10 +62,15 @@ public class WebMTrack {
     public let defaultDuration: TimeInterval
     public let codecDelay: TimeInterval
     public let seekPreRoll: TimeInterval
-    public let audioInfo: AudioInfo?
+
+    // For audio tracks
+    let samplingRate: Double
+    let channels: Int
+    let bitDepth: Int
+
     // TODO: videoInfo
 
-    init(_ cTrack: CWebMTrack, audioInfo: AudioInfo?) {
+    init(_ cTrack: CWebMTrack) {
         self.type = TrackType(rawValue: cTrack.type) ?? .unknown
         self.number = cTrack.number
         self.uid = cTrack.uid
@@ -90,7 +80,10 @@ public class WebMTrack {
         self.defaultDuration = Double(cTrack.defaultDuration) / OneSecNs
         self.codecDelay = Double(cTrack.codecDelay) / OneSecNs
         self.seekPreRoll = Double(cTrack.seekPreRoll) / OneSecNs
-        self.audioInfo = audioInfo
+
+        self.samplingRate = cTrack.samplingRate
+        self.channels = Int(cTrack.channels)
+        self.bitDepth = Int(cTrack.bitDepth)
     }
 }
 

@@ -140,34 +140,17 @@ bool webm_parser_track_info(WebMHandle handle, long index, CWebMTrack *out) {
     out->codecDelay = track->GetCodecDelay();
     out->seekPreRoll = track->GetSeekPreRoll();
 
-    return true;
-}
-
-
-bool webm_parser_audio_info(WebMHandle handle, long index, struct CWebMAudioInfo *out) {
-    if (!out)
-        return false;
-
-    auto context = WebMParserContext::cast(handle);
-    if (!context)
-        return false;
-
-    const Tracks *tracks = context->segment->GetTracks();
-    if (!tracks)
-        return false;
-
-    const Track *track = tracks->GetTrackByIndex(index);
-    if (!track)
-        return false;
-
-    if (track->GetType() != Track::kAudio)
-        return false;
-
-    const AudioTrack *audioTrack = static_cast<const AudioTrack *>(track);
-
-    out->samplingRate = audioTrack->GetSamplingRate();
-    out->channels = audioTrack->GetChannels();
-    out->bitDepth = audioTrack->GetBitDepth();
+    if (out->type == Track::kAudio) {
+        const AudioTrack *audioTrack = static_cast<const AudioTrack *>(track);
+        out->samplingRate = audioTrack->GetSamplingRate();
+        out->channels = audioTrack->GetChannels();
+        out->bitDepth = audioTrack->GetBitDepth();
+    }
+    else {
+        out->samplingRate = 0;
+        out->channels = 0;
+        out->bitDepth = 0;
+    }
 
     return true;
 }
