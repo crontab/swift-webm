@@ -12,12 +12,18 @@
 #include "../libwebm/mkvparser/mkvparser.h"
 #include "../libwebm/mkvparser/mkvreader.h"
 
+using namespace std;
+using namespace mkvparser;
+
 
 // MARK: - PARSER
 
 struct WebMParserContext {
-    std::unique_ptr<mkvparser::MkvReader> reader;
-    std::unique_ptr<mkvparser::Segment> segment;
+    unique_ptr<MkvReader> reader; // should be retained for the entire duration of parsing
+    unique_ptr<const Segment> segment; // initialized in constructor, guaranteed non-null
+
+    const Cluster *cluster; // current cluster, initialized to first in the ctor
+    const BlockEntry *block; // current block within cluster, initialized to first
 
     inline static WebMParserContext *cast(WebMHandle handle) {
         return static_cast<WebMParserContext *>(handle);
@@ -31,10 +37,10 @@ struct WebMParserContext {
 
 
 WebMHandle webm_parser_create(const char *filename) {
-    auto context = std::make_unique<WebMParserContext>();
+    auto context = make_unique<WebMParserContext>();
 
     // Create reader
-    context->reader = std::make_unique<mkvparser::MkvReader>();
+    context->reader = make_unique<MkvReader>();
 
     // Open file
     if (context->reader->Open(filename) != 0)
@@ -42,19 +48,27 @@ WebMHandle webm_parser_create(const char *filename) {
 
     // Parse the WebM header
     long long pos = 0;
-    mkvparser::EBMLHeader ebmlHeader;
+    EBMLHeader ebmlHeader;
     if (ebmlHeader.Parse(context->reader.get(), pos) < 0)
         return NULL;
 
     // Create & load segment
-    mkvparser::Segment *segment = NULL;
-    if (mkvparser::Segment::CreateInstance(context->reader.get(), pos, segment) != 0)
+    Segment *segment = NULL;
+    if (Segment::CreateInstance(context->reader.get(), pos, segment) != 0)
         return NULL;
 
-    if (segment->Load() < 0)
+    if (!segment || segment->Load() < 0)
         return NULL;
 
     context->segment.reset(segment);
+
+    // Load first cluster & first block
+    context->cluster = segment->GetFirst();
+    if (context->cluster) {
+        const BlockEntry *block;
+        long status = context->cluster->GetFirst(block);
+        context->block = block;
+    }
 
     return context.release();
 }
@@ -70,10 +84,7 @@ double webm_parser_get_duration(WebMHandle handle) {
     if (!context)
         return 0;
 
-    if (!context->segment)
-        return 0;
-
-    const mkvparser::SegmentInfo *info = context->segment->GetInfo();
+    const SegmentInfo *info = context->segment->GetInfo();
     if (!info)
         return 0;
 
@@ -92,10 +103,7 @@ long webm_parser_track_count(WebMHandle handle) {
     if (!context)
         return 0;
 
-    if (!context->segment)
-        return 0;
-
-    const mkvparser::Tracks *tracks = context->segment->GetTracks();
+    const Tracks *tracks = context->segment->GetTracks();
     if (!tracks)
         return 0;
 
@@ -103,7 +111,7 @@ long webm_parser_track_count(WebMHandle handle) {
 }
 
 
-bool webm_parser_track_info(WebMHandle handle, long index, CWebMTrack* out) {
+bool webm_parser_track_info(WebMHandle handle, long index, CWebMTrack *out) {
     if (!out)
         return false;
 
@@ -111,17 +119,14 @@ bool webm_parser_track_info(WebMHandle handle, long index, CWebMTrack* out) {
     if (!context)
         return false;
 
-    if (!context->segment)
-        return false;
-
-    const mkvparser::Tracks *tracks = context->segment->GetTracks();
+    const Tracks *tracks = context->segment->GetTracks();
     if (!tracks)
         return false;
 
     if (index < 0 || index >= tracks->GetTracksCount())
         return false;
 
-    const mkvparser::Track *track = tracks->GetTrackByIndex(index);
+    const Track *track = tracks->GetTrackByIndex(index);
     if (!track)
         return false;
 
@@ -139,7 +144,7 @@ bool webm_parser_track_info(WebMHandle handle, long index, CWebMTrack* out) {
 }
 
 
-bool webm_parser_audio_info(WebMHandle handle, long index, struct CWebMAudioInfo* out) {
+bool webm_parser_audio_info(WebMHandle handle, long index, struct CWebMAudioInfo *out) {
     if (!out)
         return false;
 
@@ -147,21 +152,18 @@ bool webm_parser_audio_info(WebMHandle handle, long index, struct CWebMAudioInfo
     if (!context)
         return false;
 
-    if (!context->segment)
-        return false;
-
-    const mkvparser::Tracks *tracks = context->segment->GetTracks();
+    const Tracks *tracks = context->segment->GetTracks();
     if (!tracks)
         return false;
 
-    const mkvparser::Track *track = tracks->GetTrackByIndex(index);
+    const Track *track = tracks->GetTrackByIndex(index);
     if (!track)
         return false;
 
-    if (track->GetType() != mkvparser::Track::kAudio)
+    if (track->GetType() != Track::kAudio)
         return false;
 
-    const mkvparser::AudioTrack *audioTrack = static_cast<const mkvparser::AudioTrack *>(track);
+    const AudioTrack *audioTrack = static_cast<const AudioTrack *>(track);
 
     out->samplingRate = audioTrack->GetSamplingRate();
     out->channels = audioTrack->GetChannels();
