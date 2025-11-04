@@ -2,7 +2,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "swift-webm-audio",
+    name: "swift-webm",
     platforms: [
         .iOS(.v18),
         .macOS(.v15)

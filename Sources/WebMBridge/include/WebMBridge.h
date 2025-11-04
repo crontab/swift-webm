@@ -1,6 +1,6 @@
 //
 //  WebMBridge.h
-//  swift-webm-audio
+//  swift-webm
 //
 //  Created by Hovik Melikyan on 04.11.25.
 //
