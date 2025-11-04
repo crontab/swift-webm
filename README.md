@@ -1,3 +1,3 @@
-# WebM Swift wrapper (audio only)
+# WebM Swift wrapper
 
 **Work in progress.**
