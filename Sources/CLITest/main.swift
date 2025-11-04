@@ -9,5 +9,11 @@ print("Hello, WebM!")
 
 let filePath = "/Users/hovik/Projects/TalkMachine/audio-a.webm"
 
-let parser = try WebMParser(filePath: filePath)
-print("Duration:", parser.getDuration())
+do {
+    let parser = try WebMParser(filePath: filePath)
+    print("Duration:", parser.getDuration())
+
+}
+catch {
+    print("ERROR:", error)
+}

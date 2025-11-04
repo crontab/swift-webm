@@ -13,12 +13,6 @@
 #include "../libwebm/mkvparser/mkvreader.h"
 
 
-template <typename T, typename... Args>
-std::unique_ptr<T> make_unique_compat(Args &&...args) {
-    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-}
-
-
 // MARK: - PARSER
 
 struct WebMParserContext {
@@ -37,10 +31,10 @@ struct WebMParserContext {
 
 
 WebMParserHandle webm_parser_create(const char *filename) {
-    auto context = make_unique_compat<WebMParserContext>();
+    auto context = std::make_unique<WebMParserContext>();
 
     // Create reader
-    context->reader = make_unique_compat<mkvparser::MkvReader>();
+    context->reader = std::make_unique<mkvparser::MkvReader>();
 
     // Open file
     if (context->reader->Open(filename) != 0)
@@ -85,4 +79,22 @@ double webm_parser_get_duration(WebMParserHandle handle) {
         return 0;
 
     return static_cast<double>(duration_ns) / 1000000000.0;
+}
+
+
+// MARK: - TRACK
+
+void cwebm_track_from_track(struct CWebMTrack* out, const mkvparser::Track* track) {
+    if (!out || !track)
+        return;
+
+    out->type = track->GetType();
+    out->number = track->GetNumber();
+    out->uid = track->GetUid();
+    out->name = track->GetNameAsUTF8();
+    out->codecId = track->GetCodecId();
+    out->lacing = track->GetLacing();
+    out->defaultDuration = track->GetDefaultDuration();
+    out->codecDelay = track->GetCodecDelay();
+    out->seekPreRoll = track->GetSeekPreRoll();
 }

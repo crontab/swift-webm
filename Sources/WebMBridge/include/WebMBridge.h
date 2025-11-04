@@ -8,14 +8,31 @@
 #ifndef WebMBridge_h
 #define WebMBridge_h
 
+#include <stdbool.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+
 // Opaque handle for Swift interop
 typedef void *WebMParserHandle;
 
-// Parser
+
+// Intermediary structure for creating Swift-friendly ones
+struct CWebMTrack {
+    long type;
+    long number;
+    unsigned long long uid;
+    const char* name;
+    const char* codecId;
+    bool lacing;
+    unsigned long long defaultDuration;
+    unsigned long long codecDelay;
+    unsigned long long seekPreRoll;
+};
+
+
 WebMParserHandle webm_parser_create(const char *filepath);
 void webm_parser_destroy(WebMParserHandle handle);
 double webm_parser_get_duration(WebMParserHandle handle);
