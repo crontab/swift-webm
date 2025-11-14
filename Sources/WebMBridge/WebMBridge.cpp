@@ -48,14 +48,15 @@ struct WebMParserContext {
     }
 
     void setEOS() {
+        reset();
+        eos = true;
+    }
+
+    void reset() {
         cluster = NULL;
         entry = NULL;
         frameNumber = 0;
-        eos = true;
-        free(frameData.bytes);
-        frameData.bytes = NULL;
-        frameData.size = 0;
-        frameData.timestamp = 0;
+        eos = false;
     }
 
     void ensureFrameBytes(long size) {
@@ -247,4 +248,9 @@ newBlock:
 bool webm_parser_eos(WebMHandle handle) {
     auto c = WebMParserContext::cast(handle);
     return !c || c->eos;
+}
+
+
+void webm_parser_reset(WebMHandle handle) {
+    auto c = WebMParserContext::cast(handle);
 }

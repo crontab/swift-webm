@@ -38,10 +38,39 @@ final class WebMOpusFileReader {
     }
 
 
-    func read() throws -> AVAudioPCMBuffer? {
-        try parser.readData(trackNumber: track.number).map {
-            try decoder.decode($0.data)
+    func schedule(on playerNode: AVAudioPlayerNode) throws {
+        // Pre-schedule one second of data
+        var lookahead = Int(format.sampleRate) // 1s
+        while let scheduled = scheduleNext(playerNode: playerNode), lookahead > 0 {
+            lookahead -= scheduled
         }
+    }
+
+
+    private func scheduleNext(playerNode: AVAudioPlayerNode) -> Int? {
+        do {
+            guard let buffer = try read() else {
+                return nil
+            }
+            playerNode.scheduleBuffer(buffer, completionCallbackType: .dataConsumed) { _ in
+                Task { @WebMActor [weak self] in
+                    _ = self?.scheduleNext(playerNode: playerNode)
+                }
+            }
+            return Int(buffer.frameLength)
+        }
+        catch {
+            playerNode.stop()
+            return nil
+        }
+    }
+
+
+    private func read() throws -> AVAudioPCMBuffer? {
+        guard let frame = parser.readFrame(trackNumber: track.number) else {
+            return nil
+        }
+        return try decoder.decode(frame.data)
     }
 
 
@@ -63,37 +92,6 @@ print("Hello, WebM!")
 let filePath = "/Users/hovik/Projects/TalkMachine/audio-a.webm"
 
 
-@WebMActor
-func schedule(reader: WebMOpusFileReader, playerNode: AVAudioPlayerNode) throws {
-
-    @WebMActor
-    func scheduleNext() -> Int? {
-        do {
-            guard let buffer = try reader.read() else {
-                return nil
-            }
-            playerNode.scheduleBuffer(buffer, completionCallbackType: .dataConsumed) { _ in
-                Task { @WebMActor in
-                    _ = scheduleNext()
-                }
-            }
-            return Int(buffer.frameLength)
-        }
-        catch {
-            print("Scheduler error:", error)
-            playerNode.stop()
-            return nil
-        }
-    }
-
-    // Pre-schedule one second of data
-    var lookahead = Int(reader.format.sampleRate) // 1s
-    while let scheduled = scheduleNext(), lookahead > 0 {
-        lookahead -= scheduled
-    }
-}
-
-
 do {
     let reader = try await WebMOpusFileReader(url: URL(filePath: filePath))
     print("Duration =", reader.duration)
@@ -107,7 +105,7 @@ do {
 
     print("Playing...")
     playerNode.play()
-    try await schedule(reader: reader, playerNode: playerNode)
+    try await reader.schedule(on: playerNode)
 
 //    RunLoop.main.run(until: Date.now.addingTimeInterval(max(10, reader.duration)))
 //    try await Task.sleep(for: .seconds(reader.duration > 0 ? reader.duration : 20))

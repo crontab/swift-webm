@@ -55,6 +55,7 @@ long        webm_parser_track_count(WebMHandle handle);
 bool        webm_parser_track_info(WebMHandle handle, long index, CWebMTrack *out);
 CWebMData  *webm_parser_read(WebMHandle handle, long trackNumber);
 bool        webm_parser_eos(WebMHandle handle);
+void        webm_parser_reset(WebMHandle handle);
 
 #ifdef __cplusplus
 }

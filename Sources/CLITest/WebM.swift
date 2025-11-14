@@ -33,7 +33,7 @@ final class WebMParser {
     }
 
 
-    func readData(trackNumber: Int) -> WebMFrame? {
+    func readFrame(trackNumber: Int) -> WebMFrame? {
         guard let cData = webm_parser_read(handle, trackNumber)?.pointee else {
             return nil
         }
@@ -45,6 +45,11 @@ final class WebMParser {
 
     var isEOS: Bool {
         webm_parser_eos(handle)
+    }
+
+
+    func reset() {
+        webm_parser_reset(handle);
     }
 
 
