@@ -9,16 +9,16 @@ import Foundation
 import WebMBridge
 
 
-public let OneSecNs: Double = 1_000_000_000
+let OneSecNs: Double = 1_000_000_000
 
 
-public class WebMParser {
+class WebMParser {
 
-    public let duration: TimeInterval
-    public let tracks: [WebMTrack]
+    let duration: TimeInterval
+    let tracks: [WebMTrack]
 
 
-    public init(filePath: String) throws {
+    init(filePath: String) throws {
         guard let handle = webm_parser_create(filePath) else {
             throw WebMError.invalidFile
         }
@@ -33,7 +33,7 @@ public class WebMParser {
     }
 
 
-    public func readData(trackNumber: Int) -> WebMFrame? {
+    func readData(trackNumber: Int) -> WebMFrame? {
         guard let cData = webm_parser_read(handle, trackNumber)?.pointee else {
             return nil
         }
@@ -43,7 +43,7 @@ public class WebMParser {
     }
 
 
-    public var isEOS: Bool {
+    var isEOS: Bool {
         webm_parser_eos(handle)
     }
 
@@ -58,9 +58,9 @@ public class WebMParser {
 }
 
 
-public class WebMTrack {
+class WebMTrack {
 
-    public enum TrackType: Int {
+    enum TrackType: Int {
         case video = 0x01
         case audio = 0x02
         case subtitle = 0x11
@@ -68,15 +68,15 @@ public class WebMTrack {
         case unknown = 0
     }
 
-    public let type: TrackType
-    public let number: Int
-    public let uid: UInt64
-    public let name: String?
-    public let codecId: String?
-    public let lacing: Bool
-    public let defaultDuration: TimeInterval
-    public let codecDelay: TimeInterval
-    public let seekPreRoll: TimeInterval
+    let type: TrackType
+    let number: Int
+    let uid: UInt64
+    let name: String?
+    let codecId: String?
+    let lacing: Bool
+    let defaultDuration: TimeInterval
+    let codecDelay: TimeInterval
+    let seekPreRoll: TimeInterval
 
     // For audio tracks
     let samplingRate: Double
@@ -103,13 +103,13 @@ public class WebMTrack {
 }
 
 
-public struct WebMFrame {
+struct WebMFrame {
     let data: Data
     let timestamp: TimeInterval
 }
 
 
-public enum WebMError: LocalizedError {
+enum WebMError: LocalizedError {
     case invalidFile
 
     public var errorDescription: String? {
