@@ -10,8 +10,8 @@ let package = Package(
 
     products: [
         .library(
-            name: "WebMBridge",
-            targets: ["WebMBridge"]
+            name: "WebM",
+            targets: ["WebM"]
         ),
         .executable(
             name: "CLITest",
@@ -28,11 +28,16 @@ let package = Package(
         .executableTarget(
             name: "CLITest",
             dependencies: [
-                "WebMBridge",
+                "WebM",
                 .product(name: "Opus", package: "swift-opus"),
-                .product(name: "Copus", package: "swift-opus")
             ],
-            path: "Sources/CLITest"
+        ),
+
+        // MARK: - WebM
+
+        .target(
+            name: "WebM",
+            dependencies: ["WebMBridge"],
         ),
 
         // MARK: - WebMBridge
@@ -40,7 +45,6 @@ let package = Package(
         .target(
             name: "WebMBridge",
             dependencies: ["libwebm"],
-            path: "Sources/WebMBridge",
             cxxSettings: [
                 .headerSearchPath("../libwebm"),
                 .headerSearchPath("../libwebm/mkvparser"),
@@ -60,7 +64,6 @@ let package = Package(
         .target(
             name: "libwebm",
             dependencies: [],
-            path: "Sources/libwebm",
             sources: [
                 "mkvparser/mkvparser.cc",
                 "mkvparser/mkvreader.cc",

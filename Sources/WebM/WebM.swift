@@ -12,13 +12,13 @@ import WebMBridge
 let OneSecNs: Double = 1_000_000_000
 
 
-final class WebMParser {
+public final class WebMParser {
 
-    let duration: TimeInterval
-    let tracks: [WebMTrack]
+    public let duration: TimeInterval
+    public let tracks: [WebMTrack]
 
 
-    init(filePath: String) throws {
+    public init(filePath: String) throws {
         guard let handle = webm_parser_create(filePath) else {
             throw WebMError.invalidFile
         }
@@ -33,7 +33,7 @@ final class WebMParser {
     }
 
 
-    func readFrame(trackNumber: Int) -> WebMFrame? {
+    public func readFrame(trackNumber: Int) -> WebMFrame? {
         guard let cData = webm_parser_read(handle, trackNumber)?.pointee else {
             return nil
         }
@@ -43,12 +43,12 @@ final class WebMParser {
     }
 
 
-    var isEOS: Bool {
+    public var isEOS: Bool {
         webm_parser_eos(handle)
     }
 
 
-    func reset() {
+    public func reset() {
         webm_parser_reset(handle);
     }
 
@@ -63,9 +63,9 @@ final class WebMParser {
 }
 
 
-final class WebMTrack: Sendable {
+public final class WebMTrack: Sendable {
 
-    enum TrackType: Int {
+    public enum TrackType: Int, Sendable {
         case video = 0x01
         case audio = 0x02
         case subtitle = 0x11
@@ -73,20 +73,20 @@ final class WebMTrack: Sendable {
         case unknown = 0
     }
 
-    let type: TrackType
-    let number: Int
-    let uid: UInt64
-    let name: String?
-    let codecId: String?
-    let lacing: Bool
-    let defaultDuration: TimeInterval
-    let codecDelay: TimeInterval
-    let seekPreRoll: TimeInterval
+    public let type: TrackType
+    public let number: Int
+    public let uid: UInt64
+    public let name: String?
+    public let codecId: String?
+    public let lacing: Bool
+    public let defaultDuration: TimeInterval
+    public let codecDelay: TimeInterval
+    public let seekPreRoll: TimeInterval
 
     // For audio tracks
-    let samplingRate: Double
-    let channels: Int
-    let bitDepth: Int
+    public let samplingRate: Double
+    public let channels: Int
+    public let bitDepth: Int
 
     // TODO: videoInfo
 
@@ -108,13 +108,13 @@ final class WebMTrack: Sendable {
 }
 
 
-struct WebMFrame {
-    let data: Data
-    let timestamp: TimeInterval
+public struct WebMFrame {
+    public let data: Data
+    public let timestamp: TimeInterval
 }
 
 
-enum WebMError: LocalizedError {
+public enum WebMError: LocalizedError {
     case invalidFile
 
     public var errorDescription: String? {
@@ -123,3 +123,4 @@ enum WebMError: LocalizedError {
         }
     }
 }
+
