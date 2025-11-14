@@ -51,6 +51,7 @@ struct WebMParserContext {
         cluster = NULL;
         entry = NULL;
         frameNumber = 0;
+        eos = true;
         free(frameData.bytes);
         frameData.bytes = NULL;
         frameData.size = 0;
