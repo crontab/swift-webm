@@ -19,11 +19,19 @@ let package = Package(
         )
     ],
 
+    dependencies: [
+        .package(url: "https://github.com/alta/swift-opus.git", from: "0.0.2")
+    ],
+
     targets: [
 
         .executableTarget(
             name: "CLITest",
-            dependencies: ["WebMBridge"],
+            dependencies: [
+                "WebMBridge",
+                .product(name: "Opus", package: "swift-opus"),
+                .product(name: "Copus", package: "swift-opus")
+            ],
             path: "Sources/CLITest"
         ),
 
