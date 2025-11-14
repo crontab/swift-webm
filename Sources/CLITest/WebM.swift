@@ -12,7 +12,7 @@ import WebMBridge
 let OneSecNs: Double = 1_000_000_000
 
 
-class WebMParser {
+final class WebMParser {
 
     let duration: TimeInterval
     let tracks: [WebMTrack]
@@ -58,7 +58,7 @@ class WebMParser {
 }
 
 
-class WebMTrack {
+final class WebMTrack: Sendable {
 
     enum TrackType: Int {
         case video = 0x01
