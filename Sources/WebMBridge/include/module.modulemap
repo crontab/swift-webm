@@ -1,5 +1,0 @@
-module WebMBridge {
-    header "WebMBridge.h"
-    export *
-    link "WebMBridge"
-}

@@ -1,0 +1,5 @@
+module CWebM {
+    header "CWebM.h"
+    export *
+    link "CWebM"
+}

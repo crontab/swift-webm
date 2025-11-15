@@ -13,6 +13,10 @@ let package = Package(
             name: "WebM",
             targets: ["WebM"]
         ),
+        .library(
+            name: "CWebM",
+            targets: ["CWebM"]
+        ),
         .executable(
             name: "CLITest",
             targets: ["CLITest"]
@@ -37,14 +41,15 @@ let package = Package(
 
         .target(
             name: "WebM",
-            dependencies: ["WebMBridge"],
+            dependencies: ["CWebM"],
         ),
 
-        // MARK: - WebMBridge
+        // MARK: - CWebM
 
         .target(
-            name: "WebMBridge",
+            name: "CWebM",
             dependencies: ["libwebm"],
+            publicHeadersPath: "include",
             cxxSettings: [
                 .headerSearchPath("../libwebm"),
                 .headerSearchPath("../libwebm/mkvparser"),

@@ -1,12 +1,12 @@
 //
-//  WebMBridge.h
+//  CWebM.h
 //  swift-webm
 //
 //  Created by Hovik Melikyan on 04.11.25.
 //
 
-#ifndef WebMBridge_h
-#define WebMBridge_h
+#ifndef CWebM_h
+#define CWebM_h
 
 #include <stdbool.h>
 
@@ -61,4 +61,4 @@ void        webm_parser_reset(WebMHandle handle);
 }
 #endif
 
-#endif /* WebMBridge_h */
+#endif /* CWebM_h */

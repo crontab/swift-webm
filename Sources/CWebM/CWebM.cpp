@@ -1,11 +1,11 @@
 //
-//  WebMBridge.cpp
+//  CWebM.cpp
 //  swift-webm
 //
 //  Created by Hovik Melikyan on 04.11.25.
 //
 
-#include "WebMBridge.h"
+#include "CWebM.h"
 
 #include <assert.h>
 
