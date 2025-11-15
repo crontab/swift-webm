@@ -55,7 +55,7 @@ final class WebMOpusFileReader {
             guard let buffer = try read() else {
                 return nil
             }
-            playerNode.scheduleBuffer(buffer, completionCallbackType: .dataConsumed) { _ in
+            playerNode.scheduleBuffer(buffer, completionCallbackType: .dataPlayedBack) { _ in
                 Task { @WebMActor [weak self] in
                     _ = self?.scheduleNext(playerNode: playerNode)
                 }

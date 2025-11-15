@@ -43,6 +43,17 @@ public final class WebMParser {
     }
 
 
+    public func readCFrame(trackNumber: Int) -> CWebMFrame? {
+        guard let cData = webm_parser_read(handle, trackNumber)?.pointee else {
+            return nil
+        }
+        return CWebMFrame(
+            data: cData.bytes,
+            count: cData.size,
+            timestamp: Double(cData.timestamp) / OneSecNs)
+    }
+
+
     public var isEOS: Bool {
         webm_parser_eos(handle)
     }
@@ -110,6 +121,13 @@ public final class WebMTrack: Sendable {
 
 public struct WebMFrame {
     public let data: Data
+    public let timestamp: TimeInterval
+}
+
+
+public struct CWebMFrame {
+    public let data: UnsafePointer<UInt8>
+    public let count: Int
     public let timestamp: TimeInterval
 }
 
