@@ -253,4 +253,5 @@ bool webm_parser_eos(WebMHandle handle) {
 
 void webm_parser_reset(WebMHandle handle) {
     auto c = WebMParserContext::cast(handle);
+    c->reset();
 }
