@@ -17,10 +17,6 @@ let package = Package(
             name: "CWebM",
             targets: ["CWebM"]
         ),
-        .executable(
-            name: "CLITest",
-            targets: ["CLITest"]
-        )
     ],
 
     dependencies: [
