@@ -1,4 +1,4 @@
-# WebM Swift wrapper
+## WebM Swift wrapper
 
-**Work in progress.**
+**Work in progress, currently for mono audio only.**
 
