@@ -8,9 +8,8 @@
 #include "CWebM.h"
 
 #include <assert.h>
+#include <memory>
 
-#include "../libwebm/mkvmuxer/mkvmuxer.h"
-#include "../libwebm/mkvmuxer/mkvwriter.h"
 #include "../libwebm/mkvparser/mkvparser.h"
 #include "../libwebm/mkvparser/mkvreader.h"
 

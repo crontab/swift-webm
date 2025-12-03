@@ -10,35 +10,12 @@ let package = Package(
 
     products: [
         .library(
-            name: "WebM",
-            targets: ["WebM"]
-        ),
-        .library(
             name: "CWebM",
             targets: ["CWebM"]
         ),
     ],
 
-    dependencies: [
-        .package(url: "https://github.com/alta/swift-opus.git", from: "0.0.2")
-    ],
-
     targets: [
-
-        .executableTarget(
-            name: "CLITest",
-            dependencies: [
-                "WebM",
-                .product(name: "Opus", package: "swift-opus"),
-            ],
-        ),
-
-        // MARK: - WebM
-
-        .target(
-            name: "WebM",
-            dependencies: ["CWebM"],
-        ),
 
         // MARK: - CWebM
 

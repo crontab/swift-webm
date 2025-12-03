@@ -46,6 +46,9 @@ typedef struct CWebMData {
 } CWebMData;
 
 
+typedef unsigned long long WebMTrackID;
+
+
 // Parser methods
 
 WebMHandle  webm_parser_create(const char *filepath);
@@ -56,6 +59,15 @@ bool        webm_parser_track_info(WebMHandle handle, long index, CWebMTrack *ou
 CWebMData  *webm_parser_read(WebMHandle handle, long trackNumber);
 bool        webm_parser_eos(WebMHandle handle);
 void        webm_parser_reset(WebMHandle handle);
+
+
+// Muxer methods
+
+WebMHandle  webm_muxer_create(const char *filepath);
+void        webm_muxer_destroy(WebMHandle handle);
+bool        webm_muxer_finalize(WebMHandle handle, double duration);
+WebMTrackID webm_muxer_add_audio_track(WebMHandle handle, double sampling_frequency, int channels, const char *codec_id);
+bool        webm_muxer_write_audio_frame(WebMHandle handle, WebMTrackID track_id, const CWebMData data);
 
 #ifdef __cplusplus
 }
