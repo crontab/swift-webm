@@ -48,6 +48,14 @@ WebMHandle webm_muxer_create(const char *filename) {
 }
 
 
+void webm_muxer_set_max_cluster_duration(WebMHandle handle, unsigned long long duration_ns) {
+    auto c = WebMMuxerContext::cast(handle);
+    if (!c)
+        return;
+    c->segment->set_max_cluster_duration(duration_ns);
+}
+
+
 void webm_muxer_destroy(WebMHandle handle) {
     delete WebMMuxerContext::cast(handle);
 }
