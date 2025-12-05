@@ -76,7 +76,7 @@ bool webm_muxer_finalize(WebMHandle handle, double duration) {
 }
 
 
-WebMTrackID webm_muxer_add_audio_track(WebMHandle handle, double sampling_frequency, int channels, const char *codec_id) {
+WebMTrackID webm_muxer_add_audio_track(WebMHandle handle, double sampling_frequency, int channels, const char *codec_id, const void* codec_private, long codec_private_size) {
     auto c = WebMMuxerContext::cast(handle);
     if (!c)
         return 0;
@@ -95,6 +95,10 @@ WebMTrackID webm_muxer_add_audio_track(WebMHandle handle, double sampling_freque
 
     audio_track->set_codec_id(codec_id);
     audio_track->set_bit_depth(16);
+
+    if (codec_private && codec_private_size > 0)
+        if (!audio_track->SetCodecPrivate(static_cast<const uint8_t *>(codec_private), codec_private_size))
+            return 0;
 
     return result;
 }

@@ -67,7 +67,7 @@ WebMHandle  webm_muxer_create(const char *filepath);
 void        webm_muxer_set_max_cluster_duration(WebMHandle handle, unsigned long long duration_ns);
 void        webm_muxer_destroy(WebMHandle handle);
 bool        webm_muxer_finalize(WebMHandle handle, double duration);
-WebMTrackID webm_muxer_add_audio_track(WebMHandle handle, double sampling_frequency, int channels, const char *codec_id);
+WebMTrackID webm_muxer_add_audio_track(WebMHandle handle, double sampling_frequency, int channels, const char *codec_id, const void* codec_private, long codec_private_size);
 bool        webm_muxer_write_audio_frame(WebMHandle handle, WebMTrackID track_id, const CWebMData data);
 
 #ifdef __cplusplus
