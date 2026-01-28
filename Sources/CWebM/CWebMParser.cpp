@@ -254,3 +254,104 @@ void webm_parser_reset(WebMHandle handle) {
     auto c = WebMParserContext::cast(handle);
     c->reset();
 }
+
+
+bool webm_parser_seek(WebMHandle handle, long trackNumber, double timestamp_seconds) {
+	auto c = WebMParserContext::cast(handle);
+	if (!c)
+		return false;
+
+	const Tracks *tracks = c->segment->GetTracks();
+	if (!tracks)
+		return false;
+
+	const Track *track = tracks->GetTrackByNumber(trackNumber);
+	if (!track)
+		return false;
+
+	long long time_ns = static_cast<long long>(timestamp_seconds * 1000000000.0);
+
+	const BlockEntry *entry = NULL;
+	long status = track->Seek(time_ns, entry);
+	if (status < 0 || !entry || entry->EOS())
+		return false;
+
+	const Cluster *cluster = entry->GetCluster();
+	if (!cluster)
+		return false;
+
+	const Block *block = entry->GetBlock();
+	if (!block || block->GetTrackNumber() != trackNumber)
+		return false;
+
+	long long blockTime = block->GetTime(cluster);
+	const BlockEntry *bestEntry = entry;
+	const Cluster *bestCluster = cluster;
+
+	while (blockTime < time_ns) {
+		status = cluster->GetNext(entry, entry);
+		if (status < 0 || !entry || entry->EOS())
+			break;
+
+		block = entry->GetBlock();
+		if (!block || block->GetTrackNumber() != trackNumber)
+			continue;
+
+		long long nextTime = block->GetTime(cluster);
+		if (nextTime > time_ns)
+			break;
+
+		bestEntry = entry;
+		bestCluster = cluster;
+		blockTime = nextTime;
+	}
+
+	if (!bestEntry || bestEntry->EOS())
+		return false;
+
+	block = bestEntry->GetBlock();
+	if (!block)
+		return false;
+
+	int frameNumber = 0;
+	int frameCount = block->GetFrameCount();
+
+	if (frameCount > 1 && time_ns > blockTime) {
+		long long frameDuration = 0;
+
+		if (bestEntry->GetKind() == BlockEntry::kBlockGroup) {
+			const BlockGroup *blockGroup = static_cast<const BlockGroup *>(bestEntry);
+			long long durationTimeCode = blockGroup->GetDurationTimeCode();
+			if (durationTimeCode > 0) {
+				const SegmentInfo *info = c->segment->GetInfo();
+				if (info) {
+					long long timecodeScale = info->GetTimeCodeScale();
+					frameDuration = durationTimeCode * timecodeScale;
+				}
+			}
+		}
+
+		if (frameDuration <= 0) {
+			unsigned long long defaultDuration = track->GetDefaultDuration();
+			if (defaultDuration > 0)
+				frameDuration = static_cast<long long>(defaultDuration);
+		}
+
+		if (frameDuration > 0) {
+			long long perFrameDuration = frameDuration / frameCount;
+			if (perFrameDuration > 0) {
+				long long targetOffset = time_ns - blockTime;
+				frameNumber = static_cast<int>(targetOffset / perFrameDuration);
+				if (frameNumber >= frameCount)
+					frameNumber = frameCount - 1;
+			}
+		}
+	}
+
+	c->cluster = bestCluster;
+	c->entry = bestEntry;
+	c->frameNumber = frameNumber;
+	c->eos = false;
+
+	return true;
+}

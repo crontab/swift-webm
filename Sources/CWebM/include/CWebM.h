@@ -59,6 +59,7 @@ bool        webm_parser_track_info(WebMHandle handle, long index, CWebMTrack *ou
 CWebMData  *webm_parser_read(WebMHandle handle, long trackNumber);
 bool        webm_parser_eos(WebMHandle handle);
 void        webm_parser_reset(WebMHandle handle);
+bool        webm_parser_seek(WebMHandle handle, long trackNumber, double timestamp_seconds);
 
 
 // Muxer methods
